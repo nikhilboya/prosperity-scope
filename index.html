@@ -70,6 +70,9 @@ const PC={responsive:true,displayModeBar:false};
 
 // --- PARSER: handles .log, submission .json, lambda arrays ---
 
+function fixJSON(s){return s.replace(/,\s*([}\]])/g,'$1');}
+function safeParseJSON(s){try{return JSON.parse(s);}catch{try{return JSON.parse(fixJSON(s));}catch{return null;}}}
+
 function parseActivitiesCSV(text){
   const ticks=[];
   for(const line of text.trim().split('\n')){
@@ -145,7 +148,7 @@ function parseLog(content){
       if(cur)sec[cur].push(line);
     }
     ticks=parseActivitiesCSV(sec.a.join('\n'));
-    try{tradeList=JSON.parse(sec.t.join('\n').trim());}catch{}
+    try{tradeList=safeParseJSON(sec.t.join('\n').trim())||[];}catch{}
     sbLines=sec.s;
   } else if(s.startsWith('{')){
     try{
@@ -171,7 +174,7 @@ function parseLog(content){
     }catch{
       const sec={s:[],a:[],t:[]};let cur=null;
       for(const line of content.split('\n')){const t=line.trim();if(t==='Sandbox logs:'){cur='s';continue;}if(t==='Activities log:'){cur='a';continue;}if(t==='Trade History:'){cur='t';continue;}if(cur)sec[cur].push(line);}
-      ticks=parseActivitiesCSV(sec.a.join('\n'));try{tradeList=JSON.parse(sec.t.join('\n').trim());}catch{}sbLines=sec.s;
+      ticks=parseActivitiesCSV(sec.a.join('\n'));try{tradeList=safeParseJSON(sec.t.join('\n').trim())||[];}catch{}sbLines=sec.s;
     }
   }
 
